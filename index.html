@@ -1,120 +1,84 @@
-Stream1Name <- "Your_Stream_Name_1";
-Stream2Name <- "Your_Stream_Name_2";
-
-stream1 <- null;
-stream2 <- null;
-
-htmlresp <- "";
-
-const FEED_ID = "841838561";
-const API_KEY = "FKKyqnvMWmo3gurC9HRw2MEHyVq4YTHIpa1EXWpxLvwboTsp";
-
-
-http.onrequest(function(req, resp) {
-    if (req.body == ""){
-        gethtmlresponse();
-        resp.send(200, htmlresp);//send this if just site was accessed and no requests
-
+<html>
+  <head>
+    <title>Google Gauge - ThingSpeak</title>
+  </head>
+  <body>
+    <div id='chart_div'></div>
+  </body>
+</html>   
+ 
+<style type="text/css">
+  /*body { background-color: #ddd; }*/
+</style>
+ 
+<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js'></script> 
+<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+<script type='text/javascript'>
+ 
+    var chart; 
+    var charts;
+    var data;
+ 
+        google.load('visualization', '1', {packages:['gauge']});
+        google.setOnLoadCallback(initChart);
+ 
+    function displayData(point) {
+     
+        data.setValue(0, 0, 'Backyard');
+        data.setValue(0, 1, point);
+        chart.draw(data, options);
     }
-});
-
-
-function gethtmlresponse(){
-
-
-//Google Line Chart
-local T1Data = blob(644);
-local T2Data = blob(644);
-getStreamData(FEED_ID)
-local cnt = 0;
-
-foreach(datapoint in stream1.datapoints) {
-    T1Data.writen(datapoint.value.tofloat(),'f');
-    cnt++;
-    //server.log(datapoint.value.tofloat());
-}
-foreach(datapoint in stream2.datapoints) {
-    T2Data.writen(datapoint.value.tofloat(),'f');
-    //server.log(datapoint.value.tofloat());
-}
-server.log("Number of Data Points: " + cnt);
-T1Data.seek(0,'b');
-T2Data.seek(0,'b');
-
-
-
-htmlresp = "<!DOCTYPE html>\r\n";
-htmlresp += "<html>\r\n";
-htmlresp += "<head>\r\n";
-
-//from google chart example for line chart
-htmlresp += "<script type=\"text/javascript\" src=\"https://www.google.com/jsapi\"></script>\r\n";
-htmlresp += "<script type=\"text/javascript\">\r\n";
-htmlresp += "google.load(\"visualization\", \"1\", {packages:[\"corechart\"]});\r\n";
-htmlresp += "google.setOnLoadCallback(drawChart);\r\n";
-htmlresp += "function drawChart() {\r\n";
-htmlresp += "var data = google.visualization.arrayToDataTable([\r\n";
-htmlresp += "['Count',  '" + Stream1Name + "',   '" + Stream2Name + "'],\r\n";
-local dt = 6.0;
-local dtm = "";
-local t = 0;
-for (t = 0; t < cnt; t++){
-    try{
-        htmlresp += "['" + (cnt - t).tostring() + "',   " + T1Data.readn('f') + ",  " + T2Data.readn('f') + "],\r\n";
+ 
+    function loadData() {
+        // variable for the data point
+        var p;
+     
+        $.getJSON('https://api.thingspeak.com/channels/7367/field/5/last.json?apikey=EPQ400EHDNU7DVLE&callback=?', function(data) { //Thingspeak
+            // get the data point
+             
+            p = data.field5; //Thingspeak
+             
+            if (p) {
+                p = (p/1);
+                displayData(p);
+            }
+        });
     }
-    catch(e){
-        break;
+ 
+    function initChart() {
+        data = new google.visualization.DataTable();
+        data.addColumn('string', 'Label');
+        data.addColumn('number', 'Value');
+        data.addRows(1);
+             
+        chart = new google.visualization.Gauge(document.getElementById('chart_div'));
+        options = {
+            width: 175, 
+            height: 175, 
+             
+            redFrom: 90, 
+            redTo: 110,
+             
+            yellowFrom: 80, 
+            yellowTo: 90, 
+             
+            greenFrom: 70, 
+            greenTo: 80, 
+             
+            minorTicks: 10,
+             
+            min: 30, 
+            max: 110, 
+             
+            animation: {
+                duration: 400, 
+                easing: 'out',
+            },
+        };
+     
+        loadData();
+ 
+        setInterval('loadData()', 15000);
+             
     }
-}
-htmlresp += "]);\r\n";
-htmlresp += "var options = {\r\n";
-//htmlresp += "title: 'Graph Title',curveType: 'function',legend: { position: 'bottom' }};\r\n";
-htmlresp += "title: 'Graph Title',";
-htmlresp += "curveType: 'function',";
-//htmlresp += "chartArea:{left:10,top:10,width:'100%',height:'500'}";
-htmlresp += "};\r\n";
-htmlresp += "var chart = new google.visualization.LineChart(document.getElementById('chart_div'));\r\n";
-htmlresp += "chart.draw(data, options);\r\n";
-htmlresp += "}\r\n";
-htmlresp += "</script></head>\r\n";
-
-htmlresp += "<body>\r\n";
-
-//display google chart with 2 steams on 1 chart
-htmlresp += "<div id=\"chart_div\"></div>\r\n"
-
-//get Xively png chart for each stream if you want 
-//htmlresp += "<img src=\"https://api.xively.com/v2/feeds/"; + FEED_ID + "/datastreams/" + Stream1Name + ".png?c=2188c5&g=true&t=%22" + Stream1Name + "%22&b=true&scale=manual&min=-25&max=100&h=200\"><br>";
-//htmlresp += "<img src=\"https://api.xively.com/v2/feeds/"; + FEED_ID + "/datastreams/" + Stream2Name + ".png?c=FFCC33&g=true&t=%22" + Stream2Name + "%22&b=true&scale=manual&min=-25&max=100&h=200\"><br>";
-
-
-htmlresp += "</body>\r\n";
-htmlresp += "</html>\r\n";
-
-}
-
-function getStreamData(feedID){
-
-    local trigger_url = "https://api.xively.com/v2/feeds/"; + FEED_ID + ".json?duration=6hours&interval=0&limit=600";
-    //may need to play with the limit=600 number to make sure you are getting all the available reading for last 6 hrs.
-    local req = http.get(trigger_url, {"X-ApiKey":API_KEY, "User-Agent":"xively-Imp-Lib/1.0"});     //add headers
-    local res = req.sendsync();         //send request
-    //server.log(res.body);
-    local data = http.jsondecode(res.body);
-    local dataStreams = data.datastreams;
-
-    
-    foreach(s in dataStreams) {
-        if (s.id == Stream1Name) {
-            server.log("Xively Stream: " + s.id + " found.");
-            stream1 = s;
-        }
-        if (s.id == Stream2Name) {
-            server.log("Xively Stream: " + s.id + " found.");
-            stream2 = s;
-        }
-    }
-
-    return;
-
-};
+</script>
