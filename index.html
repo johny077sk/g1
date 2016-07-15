@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Google Gauge - ThingSpeak</title>
+    <title>Google Gauge - Xively</title>
   </head>
   <body>
     <div id='chart_div'></div>
@@ -24,7 +24,7 @@
  
     function displayData(point) {
      
-        data.setValue(0, 0, 'Backyard');
+        data.setValue(0, 0, 'Teplota Kosice');
         data.setValue(0, 1, point);
         chart.draw(data, options);
     }
@@ -33,11 +33,11 @@
         // variable for the data point
         var p;
      
-        $.getJSON('https://api.thingspeak.com/channels/7367/field/5/last.json?apikey=EPQ400EHDNU7DVLE&callback=?', function(data) { //Thingspeak
+        $.getJSON('https://api.xively.com/v2/feeds/841838561/datastreams/TeplotaKosice0.json?&key=7WyLHjl7UoTy4TWmNtAnOUU5PWwm60mYKJ7lyzmhxZ37naOr&callback=?', function(data) { //Xively
+         
             // get the data point
-             
-            p = data.field5; //Thingspeak
-             
+            p = data.current_value; //Xively
+                         
             if (p) {
                 p = (p/1);
                 displayData(p);
@@ -56,19 +56,19 @@
             width: 175, 
             height: 175, 
              
-            redFrom: 90, 
-            redTo: 110,
+            redFrom: 50, 
+            redTo: 60,
              
-            yellowFrom: 80, 
-            yellowTo: 90, 
+            yellowFrom: 40, 
+            yellowTo: 50, 
              
-            greenFrom: 70, 
-            greenTo: 80, 
+            greenFrom: 30, 
+            greenTo: 40, 
              
             minorTicks: 10,
              
             min: 30, 
-            max: 110, 
+            max: 60, 
              
             animation: {
                 duration: 400, 
